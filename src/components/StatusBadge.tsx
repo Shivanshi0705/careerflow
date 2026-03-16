@@ -1,23 +1,26 @@
 type Props = {
-    status: string;
+  status: string;
+};
+
+export default function StatusBadge({ status }: Props) {
+  const styles: Record<string, string> = {
+    Saved: "border border-zinc-500/20 bg-zinc-500/10 text-zinc-300",
+    Applied: "border border-blue-500/20 bg-blue-500/10 text-blue-300",
+    OA: "border border-indigo-500/20 bg-indigo-500/10 text-indigo-300",
+    Interview: "border border-violet-500/20 bg-violet-500/10 text-violet-300",
+    "Final Interview":
+      "border border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-300",
+    Offer: "border border-emerald-500/20 bg-emerald-500/10 text-emerald-300",
+    Rejected: "border border-rose-500/20 bg-rose-500/10 text-rose-300",
   };
-  
-  export default function StatusBadge({ status }: Props) {
-    const styles: Record<string, string> = {
-      Applied: "bg-blue-500/20 text-blue-400",
-      Interview: "bg-yellow-500/20 text-yellow-400",
-      Offer: "bg-green-500/20 text-green-400",
-      Rejected: "bg-red-500/20 text-red-400",
-      Saved: "bg-slate-500/20 text-slate-400",
-    };
-  
-    return (
-      <span
-        className={`rounded-full px-3 py-1 text-xs font-medium ${
-          styles[status] || "bg-slate-500/20 text-slate-400"
-        }`}
-      >
-        {status}
-      </span>
-    );
-  }
+
+  return (
+    <span
+      className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
+        styles[status] || "border border-zinc-500/20 bg-zinc-500/10 text-zinc-300"
+      }`}
+    >
+      {status}
+    </span>
+  );
+}

@@ -1,5 +1,6 @@
 import "./globals.css";
-import Navbar from "../components/Navbar";
+import Navbar from "@/components/Navbar";
+import RouteGuard from "@/components/RouteGuard";
 
 export const metadata = {
   title: "CareerFlow",
@@ -13,9 +14,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-slate-50 text-slate-900">
-        <Navbar />
-        <main className="mx-auto max-w-7xl px-6 py-8">{children}</main>
+      <body className="bg-black text-white">
+        <RouteGuard>
+          <Navbar />
+          <main className="mx-auto max-w-7xl px-6 py-8">{children}</main>
+        </RouteGuard>
       </body>
     </html>
   );

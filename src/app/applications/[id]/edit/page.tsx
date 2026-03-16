@@ -3,8 +3,17 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { applications as mockApplications } from "@/data/mockApplications";
-import type { Application } from "@/types/application";
+import {
+  getApplicationById,
+  getStoredApplications,
+  saveApplications,
+  sortApplicationsByDate,
+} from "@/lib/applicationStorage";
+import type {
+  Application,
+  ApplicationStatus,
+  UploadedDocument,
+} from "@/types/application";
 
 export default function EditApplicationPage() {
   const params = useParams();
@@ -13,56 +22,130 @@ export default function EditApplicationPage() {
 
   const [application, setApplication] = useState<Application | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fileError, setFileError] = useState("");
 
   useEffect(() => {
-    const storedApplications = JSON.parse(
-      localStorage.getItem("applications") || "[]"
-    );
-
-    const baseApplications =
-      storedApplications.length > 0 ? storedApplications : mockApplications;
-
-    const foundApplication = baseApplications.find(
-      (app: Application) => app.id === id
-    );
-
+    const foundApplication = getApplicationById(id);
     setApplication(foundApplication || null);
     setLoading(false);
   }, [id]);
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     if (!application) return;
 
     const { name, value } = e.target;
 
-    setApplication({
-      ...application,
-      [name]: value,
+    setApplication((prev) =>
+      prev
+        ? {
+            ...prev,
+            [name]: value,
+          }
+        : prev
+    );
+  };
+
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (!application) return;
+
+    setApplication((prev) =>
+      prev
+        ? {
+            ...prev,
+            status: e.target.value as ApplicationStatus,
+          }
+        : prev
+    );
+  };
+
+  const convertFileToDataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
     });
+  };
+
+  const handleFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    type: "resume" | "coverLetter"
+  ) => {
+    if (!application) return;
+
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== "application/pdf") {
+      setFileError("Only PDF files are allowed.");
+      return;
+    }
+
+    setFileError("");
+
+    try {
+      const fileData = await convertFileToDataUrl(file);
+
+      const uploadedFile: UploadedDocument = {
+        fileName: file.name,
+        fileType: file.type,
+        fileData,
+      };
+
+      setApplication((prev) =>
+        prev
+          ? {
+              ...prev,
+              [type]: uploadedFile,
+            }
+          : prev
+      );
+    } catch (error) {
+      console.error("File upload error:", error);
+      setFileError("Something went wrong while uploading the file.");
+    }
+  };
+
+  const removeFile = (type: "resume" | "coverLetter") => {
+    setApplication((prev) =>
+      prev
+        ? {
+            ...prev,
+            [type]: null,
+          }
+        : prev
+    );
   };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!application) return;
 
-    const storedApplications = JSON.parse(
-      localStorage.getItem("applications") || "[]"
+    const existingApplications = getStoredApplications();
+
+    const updatedApplications = existingApplications.map((app) =>
+      Number(app.id) === Number(application.id)
+        ? {
+            ...application,
+            company: application.company.trim(),
+            role: application.role.trim(),
+            location: application.location?.trim() || "",
+            jobLink: application.jobLink?.trim() || "",
+            resumeVersion: application.resumeVersion?.trim() || "",
+            coverLetterVersion: application.coverLetterVersion?.trim() || "",
+            notes: application.notes?.trim() || "",
+            updatedAt: new Date().toISOString(),
+          }
+        : app
     );
 
-    const baseApplications =
-      storedApplications.length > 0 ? storedApplications : mockApplications;
+    const sortedApplications = sortApplicationsByDate(updatedApplications);
+    saveApplications(sortedApplications);
 
-    const updatedApplications = baseApplications.map((app: Application) =>
-      app.id === application.id ? application : app
-    );
-
-    localStorage.setItem("applications", JSON.stringify(updatedApplications));
     router.push(`/applications/${application.id}`);
+    router.refresh();
   };
 
   if (loading) {
@@ -103,7 +186,7 @@ export default function EditApplicationPage() {
               type="text"
               name="company"
               value={application.company}
-              onChange={handleChange}
+              onChange={handleInputChange}
               required
               className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none focus:border-slate-500"
             />
@@ -115,7 +198,7 @@ export default function EditApplicationPage() {
               type="text"
               name="role"
               value={application.role}
-              onChange={handleChange}
+              onChange={handleInputChange}
               required
               className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none focus:border-slate-500"
             />
@@ -126,8 +209,8 @@ export default function EditApplicationPage() {
             <input
               type="text"
               name="location"
-              value={application.location}
-              onChange={handleChange}
+              value={application.location || ""}
+              onChange={handleInputChange}
               required
               className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none focus:border-slate-500"
             />
@@ -138,8 +221,8 @@ export default function EditApplicationPage() {
             <input
               type="url"
               name="jobLink"
-              value={application.jobLink}
-              onChange={handleChange}
+              value={application.jobLink || ""}
+              onChange={handleInputChange}
               required
               className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none focus:border-slate-500"
             />
@@ -153,7 +236,7 @@ export default function EditApplicationPage() {
               type="date"
               name="dateApplied"
               value={application.dateApplied}
-              onChange={handleChange}
+              onChange={handleInputChange}
               required
               className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none focus:border-slate-500"
             />
@@ -162,9 +245,8 @@ export default function EditApplicationPage() {
           <div>
             <label className="mb-2 block text-sm text-slate-200">Status</label>
             <select
-              name="status"
               value={application.status}
-              onChange={handleChange}
+              onChange={handleStatusChange}
               className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none focus:border-slate-500"
             >
               <option value="Saved">Saved</option>
@@ -184,8 +266,8 @@ export default function EditApplicationPage() {
             <input
               type="text"
               name="resumeVersion"
-              value={application.resumeVersion}
-              onChange={handleChange}
+              value={application.resumeVersion || ""}
+              onChange={handleInputChange}
               className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none focus:border-slate-500"
             />
           </div>
@@ -197,19 +279,77 @@ export default function EditApplicationPage() {
             <input
               type="text"
               name="coverLetterVersion"
-              value={application.coverLetterVersion}
-              onChange={handleChange}
+              value={application.coverLetterVersion || ""}
+              onChange={handleInputChange}
               className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none focus:border-slate-500"
             />
           </div>
         </div>
 
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-slate-800 bg-slate-950 p-4">
+            <label className="mb-2 block text-sm text-slate-200">
+              Replace Resume (PDF)
+            </label>
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={(e) => handleFileUpload(e, "resume")}
+              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white file:mr-4 file:rounded-lg file:border-0 file:bg-white file:px-4 file:py-2 file:text-sm file:font-medium file:text-black"
+            />
+
+            {application.resume && (
+              <div className="mt-3 space-y-2">
+                <p className="text-sm text-emerald-400">
+                  Current: {application.resume.fileName}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => removeFile("resume")}
+                  className="rounded-lg bg-red-600 px-3 py-2 text-sm text-white hover:bg-red-500"
+                >
+                  Remove Resume
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-950 p-4">
+            <label className="mb-2 block text-sm text-slate-200">
+              Replace Cover Letter (PDF)
+            </label>
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={(e) => handleFileUpload(e, "coverLetter")}
+              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white file:mr-4 file:rounded-lg file:border-0 file:bg-white file:px-4 file:py-2 file:text-sm file:font-medium file:text-black"
+            />
+
+            {application.coverLetter && (
+              <div className="mt-3 space-y-2">
+                <p className="text-sm text-emerald-400">
+                  Current: {application.coverLetter.fileName}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => removeFile("coverLetter")}
+                  className="rounded-lg bg-red-600 px-3 py-2 text-sm text-white hover:bg-red-500"
+                >
+                  Remove Cover Letter
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {fileError && <p className="text-sm text-red-400">{fileError}</p>}
+
         <div>
           <label className="mb-2 block text-sm text-slate-200">Notes</label>
           <textarea
             name="notes"
-            value={application.notes}
-            onChange={handleChange}
+            value={application.notes || ""}
+            onChange={handleInputChange}
             rows={5}
             className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none focus:border-slate-500"
           />
