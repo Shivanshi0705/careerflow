@@ -130,29 +130,6 @@ Password
 
 User1@123
 
-# Project Structure
-src
- ├── app
- │   ├── dashboard
- │   ├── applications
- │   ├── contacts
- │   ├── login
- │   └── signup
- │
- ├── components
- │   ├── RouteGuard
- │   └── UI components
- │
- ├── data
- │   ├── mockApplications
- │   └── mockContacts
- │
- ├── lib
- │   ├── applicationMetrics
- │   └── applicationStorage
- │
- └── types
-
 # Future Improvements
 
 ## Potential improvements for the project include:
