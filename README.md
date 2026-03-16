@@ -66,29 +66,4 @@ CareerFlow was designed with a modern dark theme and a dashboard-first experienc
 - clear status visibility
 - a polished recruiting-focused workflow
 
-## Screenshots
 
-Add screenshots here from your project.
-
-Example:
-
-```md
-## Screenshots
-
-### Dashboard
-![Dashboard](./screenshots/dashboard.png)
-
-### Applications Page
-![Applications](./screenshots/applications.png)
-
-### Add Application
-![Add Application](./screenshots/add-application.png)
-
-### Contacts Page
-![Contacts](./screenshots/contacts.png)
-
-### Add Contact
-![Add Contact](./screenshots/add-contact.png)
-
-### Login
-![Login](./screenshots/login.png)
