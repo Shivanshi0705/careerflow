@@ -49,12 +49,12 @@ This project was built with a strong focus on usability, organization, and moder
 
 ## Tech Stack
 
-- **Next.js**
-- **React**
-- **TypeScript**
-- **Tailwind CSS**
-- **Lucide React Icons**
-- **LocalStorage** for mock persistence
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- Lucide React
+- LocalStorage for mock persistence
 
 ## UI / Design Goals
 
@@ -66,4 +66,10 @@ CareerFlow was designed with a modern dark theme and a dashboard-first experienc
 - clear status visibility
 - a polished recruiting-focused workflow
 
+## Getting Started
 
+Clone the repository:
+
+```bash
+git clone https://github.com/Shivanshi0705/careerflow.git
+cd careerflow
