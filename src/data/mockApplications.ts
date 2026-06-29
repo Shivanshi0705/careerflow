@@ -421,4 +421,5 @@ export const applications: Application[] = [
     resume: null,
     coverLetter: null,
   },
+  
 ];

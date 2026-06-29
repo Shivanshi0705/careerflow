@@ -13,6 +13,21 @@ export type UploadedDocument = {
   fileData: string;
 };
 
+export type TailoredBullet = {
+  originalBulletId: string;
+  original: string;
+  rewritten: string;
+  relevanceScore: number;
+  reasoning: string;
+};
+
+export type TailoredResult = {
+  tailoredBullets: TailoredBullet[];
+  missingKeywords: string[];
+  generatedAt: string;
+  jobDescriptionSnapshot: string;
+};
+
 export type Application = {
   id: number;
   company: string;
@@ -28,4 +43,6 @@ export type Application = {
   coverLetter?: UploadedDocument | null;
   createdAt?: string;
   updatedAt?: string;
+  jobDescription?: string;
+  tailoredResult?: TailoredResult | null;
 };
