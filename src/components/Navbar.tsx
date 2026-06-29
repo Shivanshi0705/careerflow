@@ -11,6 +11,7 @@ const appLinks = [
   { href: "/applications/new", label: "Add Application" },
   { href: "/contacts", label: "Contacts" },
   { href: "/contacts/new", label: "Add Contact" },
+  { href: "/bullets", label: "Bullets" },
 ];
 
 export default function Navbar() {
