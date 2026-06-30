@@ -1,183 +1,102 @@
 # CareerFlow
 
-CareerFlow is a modern **job application and networking tracker** designed to help users stay organized throughout the recruiting process. It allows users to manage applications, monitor pipeline stages, track recruiter and networking contacts, and view key dashboard insights in one place.
+An AI-augmented job application tracker. Tracks roles, contacts, and pipeline
+metrics like any other tracker — and adds an LLM-powered resume bullet
+tailoring feature that turns a job description into ranked, rewritten resume
+bullets in under 10 seconds.
 
----
+Built solo as a portfolio piece while job hunting for AI / data / product
+internships in summer 2026.
 
-# Overview
+## The tailoring feature
 
-The goal of **CareerFlow** is to simplify internship and job searching by giving users a clean, centralized system to:
+Tailoring a resume per application takes ~45 minutes manually. Applying to 20
+roles a cycle, that math doesn't work. CareerFlow fixes that loop:
 
-- Track submitted applications
-- Manage recruiting stages such as **Applied, OA, Interview, Final Interview, Offer, and Rejected**
-- Store networking contacts and follow-up details
-- Monitor recent activity and recruiting progress
-- Keep role-specific notes, resume versions, and cover letter versions organized
+1. **Bullet bank.** Store every resume bullet you've ever written once,
+   tagged by experience and theme.
+2. **Paste a JD.** On any application's detail page, drop in the full job
+   description.
+3. **Tailor.** A server-side Anthropic Claude API route returns the top 5
+   most relevant bullets — rewritten to honestly match the JD, scored
+   0–100 with reasoning, plus 5–10 keywords from the JD that are missing
+   from the bank (real skill gaps, not buzzwords to fake).
 
-This project was built with a strong focus on **usability, organization, and modern UI design**.
+The model is instructed to preserve every fact, metric, and tool from the
+original bullet. No fabrication. If a bullet truly doesn't map to the role,
+the score reflects that — honest low scores are informative output, not a
+failure mode.
 
----
+## Tech
 
-# Features
+Next.js 16 (App Router), TypeScript, Tailwind v4, React 19. Anthropic Claude
+Sonnet 4.5 via a server-side `fetch` (no SDK dep). LocalStorage persistence
+for v1 — a deliberate ship-fast tradeoff documented in the PRD.
 
-## Application Tracking
+## Project structure
 
-- Add and manage internship or job applications
-- Track **company, role, location, job link, date applied, and application status**
-- Update statuses directly from the applications page
-- Sort applications by **latest applied**
-- View pipeline progress across multiple recruiting stages
+- `src/app/bullets/` — the master bullet bank UI (list, search, tag filters,
+  inline add/edit form)
+- `src/lib/bulletStorage.ts` — localStorage CRUD for bullets
+- `src/app/api/tailor-bullets/route.ts` — the LLM API route. System prompt
+  + user prompt template live here.
+- `src/app/applications/[id]/page.tsx` — application detail page with the JD
+  input and tailored-result display
+- `src/types/` — `BulletBankEntry`, `Application`, `TailoredResult` types
+- `PRD.md` — product requirements doc: problem, users, scope, metrics,
+  decisions, roadmap
 
----
+## Prompt iteration
 
-## Dashboard Analytics
+The tailoring quality depends entirely on the system prompt. v1 produced
+keyword-substitution rewrites with all relevance scores clustered in the
+70–75 range regardless of fit. v2 fixed this by:
 
-The dashboard provides a centralized view of recruiting activity:
+- Adding a **structured reasoning step** before rewriting: identify the
+  bullet's underlying transferable skill, identify the JD's explicit and
+  implicit requirements, find the genuine mapping
+- Adding **calibrated relevance score anchors** (90+ direct match, 75+
+  strong adjacent, 60+ transferable, below 60 weak fit) so scores carry
+  signal
+- Adding a **forbidden-phrase list** ("delivering accurate results",
+  "leveraging cross-functional synergies", etc.) to block AI-buzzword
+  filler
+- Requiring **specific reasoning** ("maps to JD's predictive analytics
+  requirement; reframed lead verb from 'built' to 'forecasted'") instead
+  of generic ("demonstrates technical skills")
+- A **final self-check step** before returning JSON
 
-- Total applications tracked
-- Applied, interview, offer, and rejected metrics
-- Interview rate and offer rate
-- Recent activity across tracked applications
-- Application status breakdown
-- "Next Actions" panel for important follow-ups
+On a well-matched JD, v2 produced top scores in the 85–95 range with
+substantively reframed bullets. On a mismatched JD (FPGA role with my
+data analytics bullets), v2 correctly produced scores in the 50–65 range —
+the honest signal that the bullets don't fit.
 
----
+The current prompt lives at the top of
+[`src/app/api/tailor-bullets/route.ts`](src/app/api/tailor-bullets/route.ts).
 
-## Contact Management
+## Running locally
 
-CareerFlow also includes a networking tracker to manage recruiter and professional connections.
-
-- Add and manage recruiter, mentor, or referral contacts
-- Store **company, role, email, LinkedIn, and notes**
-- Track **last contact date**
-- Highlight newest contacts first
-- Display recent contacts on the dashboard
-
----
-
-## Documents and Notes
-
-Users can store relevant recruiting materials and notes for each application.
-
-- Save **resume version** used for an application
-- Save **cover letter version**
-- Upload resume and cover letter PDFs
-- Add custom notes for each role
-
----
-
-## Authentication
-
-- Demo login flow for testing the application
-- LocalStorage-based session handling
-- Route protection for authenticated pages
-
----
-
-# Tech Stack
-
-CareerFlow is built using modern frontend technologies.
-
-- **Next.js**
-- **React**
-- **TypeScript**
-- **Tailwind CSS**
-- **Lucide React Icons**
-- **LocalStorage** for mock data persistence
-
----
-
-# UI / Design Goals
-
-CareerFlow was designed with a **modern dark theme** and a **dashboard-first experience**.
-
-Key design principles include:
-
-- Clean spacing and **card-based layout**
-- Strong visual hierarchy
-- Simple navigation
-- Clear status visibility
-- A polished recruiting workflow experience
-
----
-# Getting Started
-
-## Clone the repository:
-
-git clone https://github.com/Shivanshi0705/careerflow.git
-cd careerflow
-
-Install dependencies:
-
+```bash
 npm install
-
-Run the development server:
-
+echo "ANTHROPIC_API_KEY=sk-ant-..." > .env.local
 npm run dev
+```
 
-Open the app in your browser:
+Open [http://localhost:3000](http://localhost:3000), sign up / log in, and
+the bullet bank seeds with sample data on first load.
 
-http://localhost:3000
-## Demo Login
+## Roadmap
 
-Use the demo account to explore the application.
+See [`PRD.md`](PRD.md) for the full roadmap. Next four items in equal
+priority:
 
-Username
+1. Eval harness — held-out (JD, bullet bank, expected output) triples for
+   measuring prompt-version improvement
+2. Live deployment to Vercel + Postgres
+3. Cover letter tailoring using the same prompt pattern
+4. ATS keyword overlay and original-vs-rewritten diff view
 
-user1
+## Status
 
-Password
-
-User1@123
-
-# Future Improvements
-
-## Potential improvements for the project include:
-
-Backend database integration
-
-Real authentication and user accounts
-
-File storage for uploaded resumes and cover letters
-
-Application reminders and follow-up notifications
-
-Calendar integration for interviews
-
-Advanced filtering and analytics
-
-Export/import functionality
-
-# Why I Built This
-
-Students and job seekers often manage applications across spreadsheets, emails, and notes, which makes recruiting difficult to organize.
-
-CareerFlow brings everything into one platform where users can:
-
-track applications
-
-monitor recruiting pipelines
-
-organize networking contacts
-
-centralize documents and notes
-
-The project demonstrates frontend development, product thinking, and user-focused interface design.
-
-# Author
-
-Shivanshi Makkar
-
-Built as a portfolio project to showcase skills in:
-
-React
-
-Next.js
-
-TypeScript
-
-Tailwind CSS
-
-Dashboard and product UI design
-
-
+Single-user v1. Built and used personally during summer 2026 recruiting.
+Open to feedback — DM on LinkedIn.
