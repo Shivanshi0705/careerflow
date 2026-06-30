@@ -1,17 +1,32 @@
 # CareerFlow
 
-An AI-augmented job application tracker. Tracks roles, contacts, and pipeline
-metrics like any other tracker — and adds an LLM-powered resume bullet
-tailoring feature that turns a job description into ranked, rewritten resume
-bullets in under 10 seconds.
+**Live demo:** https://careerflow-app.vercel.app/
+*(Sign up with any email to try the tailoring feature — bullet bank seeds
+with sample data on first load.)*
 
-Built solo as a portfolio piece while job hunting for AI / data / product
-internships in summer 2026.
+An AI-augmented job application tracker. Tracks roles, contacts, and
+pipeline metrics like any other tracker — and adds an LLM-powered resume
+bullet tailoring feature that turns a job description into ranked, rewritten
+resume bullets in under 10 seconds.
+
+Built solo as a portfolio piece during summer 2026 recruiting.
+
+## Try it
+
+1. Sign up on the live demo above
+2. Go to **Bullets** in the nav — sample bullets are pre-seeded; add your
+   own if you want
+3. Click into any tracked application
+4. Scroll to **Tailor Resume Bullets**, paste a real job description, hit
+   **Tailor Bullets**
+5. In ~10 seconds: top 5 most relevant bullets ranked and rewritten to
+   match the JD, plus the keywords from the JD that your bank doesn't
+   cover
 
 ## The tailoring feature
 
-Tailoring a resume per application takes ~45 minutes manually. Applying to 20
-roles a cycle, that math doesn't work. CareerFlow fixes that loop:
+Tailoring a resume per application takes ~45 minutes manually. Applying to
+20 roles a cycle, that math doesn't work. CareerFlow fixes that loop:
 
 1. **Bullet bank.** Store every resume bullet you've ever written once,
    tagged by experience and theme.
@@ -29,19 +44,20 @@ failure mode.
 
 ## Tech
 
-Next.js 16 (App Router), TypeScript, Tailwind v4, React 19. Anthropic Claude
-Sonnet 4.5 via a server-side `fetch` (no SDK dep). LocalStorage persistence
-for v1 — a deliberate ship-fast tradeoff documented in the PRD.
+Next.js 16 (App Router), TypeScript, Tailwind v4, React 19. Anthropic
+Claude Sonnet 4.5 via a server-side `fetch` (no SDK dep). LocalStorage
+persistence for v1 — a deliberate ship-fast tradeoff documented in
+[`PRD.md`](PRD.md). Deployed to Vercel.
 
 ## Project structure
 
-- `src/app/bullets/` — the master bullet bank UI (list, search, tag filters,
-  inline add/edit form)
+- `src/app/bullets/` — the master bullet bank UI (list, search, tag
+  filters, inline add/edit form)
 - `src/lib/bulletStorage.ts` — localStorage CRUD for bullets
-- `src/app/api/tailor-bullets/route.ts` — the LLM API route. System prompt
-  + user prompt template live here.
-- `src/app/applications/[id]/page.tsx` — application detail page with the JD
-  input and tailored-result display
+- `src/app/api/tailor-bullets/route.ts` — the LLM API route. System
+  prompt + user prompt template live here.
+- `src/app/applications/[id]/page.tsx` — application detail page with the
+  JD input and tailored-result display
 - `src/types/` — `BulletBankEntry`, `Application`, `TailoredResult` types
 - `PRD.md` — product requirements doc: problem, users, scope, metrics,
   decisions, roadmap
@@ -49,7 +65,7 @@ for v1 — a deliberate ship-fast tradeoff documented in the PRD.
 ## Prompt iteration
 
 The tailoring quality depends entirely on the system prompt. v1 produced
-keyword-substitution rewrites with all relevance scores clustered in the
+keyword-substitution rewrites with relevance scores clustered in the
 70–75 range regardless of fit. v2 fixed this by:
 
 - Adding a **structured reasoning step** before rewriting: identify the
@@ -92,11 +108,11 @@ priority:
 
 1. Eval harness — held-out (JD, bullet bank, expected output) triples for
    measuring prompt-version improvement
-2. Live deployment to Vercel + Postgres
+2. Real database (Postgres / Neon) — replace localStorage for multi-user
 3. Cover letter tailoring using the same prompt pattern
 4. ATS keyword overlay and original-vs-rewritten diff view
 
 ## Status
 
-Single-user v1. Built and used personally during summer 2026 recruiting.
-Open to feedback — DM on LinkedIn.
+Single-user v1, live on Vercel. Built and used personally during summer
+2026 recruiting.
